@@ -1,0 +1,104 @@
+Option Explicit
+
+'rozwi¹zanie zgodnosci miedzy wersjami x32 i x64
+#If VBA7 Then
+    Private Declare PtrSafe Function SetWindowPos Lib "user32" (ByVal hwnd As LongPtr, ByVal hWndInsertAfter As LongPtr, ByVal x As Long, ByVal y As Long, ByVal cx As Long, ByVal cy As Long, ByVal wFlags As Long) As Long
+#Else
+    Private Declare Function SetWindowPos Lib "user32" (ByVal hwnd As Long, ByVal hWndInsertAfter As Long, ByVal x As Long, ByVal y As Long, ByVal cx As Long, ByVal cy As Long, ByVal wFlags As Long) As Long
+#End If
+
+'niezbedne by otwierac link w przegladarce
+Private Declare PtrSafe Function ShellExecute _
+  Lib "shell32.dll" Alias "ShellExecuteA" ( _
+  ByVal hwnd As Long, _
+  ByVal Operation As String, _
+  ByVal Filename As String, _
+  Optional ByVal Parameters As String, _
+  Optional ByVal Directory As String, _
+  Optional ByVal WindowStyle As Long = vbMaximizedFocus _
+  ) As Long
+  
+  Dim lSuccess As Long
+  Dim link As String
+'paste from clipboard to the end of the document
+Sub pste(doc As Word.document)
+    With doc
+        .Content.Select
+        .Application.Selection.collapse (wdCollapseEnd)
+        '.Application.Selection.MoveUp Unit:=wdParagraph, Count:=i, Extend:=wdMove
+        .Application.Selection.Paste
+    End With
+End Sub
+
+Sub PasteAtEndPic(doc As Word.document)
+    With doc
+        .Content.Select
+        .Application.Selection.collapse (wdCollapseEnd)
+        '.Application.Selection.MoveUp Unit:=wdParagraph, Count:=i, Extend:=wdMove
+        .Application.Selection.PasteAndFormat wdChartPicture
+    End With
+End Sub
+
+
+Sub MailUIS()
+    Dim OutApp As Object
+    Dim OutMail As Object
+    Dim strbody As String
+    Dim olInsp As Outlook.Inspector
+    Dim wdDoc As Word.document
+    Dim strText As String
+    Dim emailList As String
+    Dim ccList As String
+    Dim Tday As String
+  
+    Tday = CStr(Now())
+    
+  
+    
+    
+    emailList = "mra@comp.com; mrb@comp.com"
+    ccList = "mrc@comp.com; mrd@acomp.com"
+    Set OutApp = CreateObject("Outlook.Application")
+    Set OutMail = OutApp.CreateItem(0)
+
+    On Error Resume Next
+    With OutMail
+        .To = emailList
+        .CC = ccList
+        .BCC = ""
+        .Subject = " Machine Stations (24h+) Dwell Heatmap "
+        .HTMLBody = "<BODY style=font-size:11pt;font-family:Calibri>Hi, Team <br><br><br>Here is the dwelling containers summary for UIS Stations. Containers that repeatedly appear on the list were physically not injected, but were either closed on the station or have inventory pending to be closed still. Tote was never scanned by any other sensors in the building.<br><br>Please assign associates to sweep these totes, closing them and sending to OB, prioritising those totes in red. <br><br><br><BODY style=font-size:18pt;font-family:Calibri><b>TOTES DWELLING ON UIS MACHINES:</b><br><br><BODY style=font-size:11pt;font-family:Calibri><br>"
+        Set olInsp = .GetInspector
+        Set wdDoc = olInsp.WordEditor
+        
+
+        wdDoc.Range.InsertAfter vbCrLf
+        Worksheets("Mapping").Range("A1:AA100").Copy
+        PasteAtEndPic wdDoc
+        Worksheets("Mapping").Range("AF1:AJ45").Copy
+        pste wdDoc ' paste as table
+        Application.Wait (Now + TimeValue("0:00:1")) 'zlitujcie sie przyjaciele, Outlook jest uposledzony...
+        Application.CutCopyMode = False
+        Application.Wait (Now + TimeValue("0:00:3"))
+        .display
+
+        
+        
+    End With
+    On Error GoTo 0
+    Set OutMail = Nothing
+    Set OutApp = Nothing
+    Set wdDoc = Nothing
+    Set olInsp = Nothing
+End Sub
+
+Sub AddAttachment()
+ Dim myItem As Outlook.MailItem
+ Dim myAttachments As Outlook.Attachments
+ 
+ Set myItem = Application.CreateItem(olMailItem)
+ Set myAttachments = myItem.Attachments
+ myAttachments.Add "filelocation/file.pdf", _
+ olByValue, 1, "Test"
+ myItem.display
+End Sub
