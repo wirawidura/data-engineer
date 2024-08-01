@@ -1,0 +1,82 @@
+Sub parsehtml()
+Dim H As Object, O As Object, c$, S$, W As Workbook, U$
+Dim wsA, wsB As Worksheet, wb As Workbook
+Dim sd, ed, sth, eth, stm, etm As String
+Dim http As Object, html As New HTMLDocument, topics As Object, titleElem As Object, detailsElem As Object, topic As HTMLHtmlElement
+Dim i As Integer
+Set wb = ThisWorkbook
+Set wsA = wb.Sheets("Raw_Table")
+Set http = CreateObject("MSXML2.XMLHTTP")
+Set O = CreateObject("ADODB.Stream")
+Set H = CreateObject("WinHTTP.WinHTTPRequest.5.1")
+
+wsA.Activate
+wsA.Cells.Clear
+Application.Calculation = xlCalculationManual
+        
+mw_cookie = MidwayCookie()
+
+H.SetTimeouts 120000, 120000, 120000, 120000
+    H.SetAutoLogonPolicy 0:
+    H.SetClientCertificate ("CURRENT_USER\MY\" & Environ$("UserName"))
+    H.Open "GET", "https://webforauth123.com"
+    H.setRequestHeader "Cookie", mw_cookie
+    H.send
+
+    H.Open "Get", "http://mainwebsitedummy123.com"
+        H.setRequestHeader "Cookie", mw_cookie
+    H.send
+
+On Error Resume Next
+    Kill Environ("TEMP") & "\data.html"
+On Error GoTo 0
+    O.Open: O.Type = 1: O.Write (H.responseBody): O.SaveToFile Environ("TEMP") & "\apollo.html": O.Close
+Set W = Workbooks.Open(Environ("TEMP") & "\apollo.html")
+
+
+
+ActiveSheet.UsedRange.Copy Destination:=wsA.Range("A1")
+            ActiveWorkbook.Close False
+            Kill Environ("TEMP") & "\data.html"
+            Application.CutCopyMode = False
+   On Error GoTo 0
+   
+Sheets("Raw_Table").Range("A:M").Select
+    Range("B5").Activate
+    Application.CutCopyMode = False
+    ActiveSheet.ListObjects.Add(xlSrcRange, Range("A:M"), , xlYes).Name _
+        = "Table1"
+
+isUpdated = RefreshQry("PQ", "A1")
+Sheets("Mapping").PivotTables("PivotTable1").PivotCache.Refresh
+
+Application.Calculation = xlAutomatic
+
+Sheets("Mapping").Select
+Range("A1").Select
+
+DoEvents
+
+Sheets("Mapping").Range("X1").Value = Now()
+
+MsgBox ("Update complete")
+
+End Sub
+Function RefreshQry(ByVal sheetnm As String, qloc As String) As Integer
+
+Dim wb As Workbook
+Dim wsSIM As Worksheet
+Set wb = ThisWorkbook
+Set wsSIM = wb.Sheets(sheetnm)
+
+ThisWorkbook.Queries.FastCombine = True
+
+wsSIM.Activate
+wsSIM.Range(qloc).Select
+
+DoEvents
+    Selection.ListObject.QueryTable.Refresh BackgroundQuery:=False
+DoEvents
+
+
+End Function
