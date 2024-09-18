@@ -67,15 +67,15 @@ Sub MailUIS()
         .CC = ccList
         .BCC = ""
         .Subject = " Machine Stations (24h+) Dwell Heatmap "
-        .HTMLBody = "<BODY style=font-size:11pt;font-family:Calibri>Hi, Team <br><br><br>Here is the dwelling containers summary for UIS Stations. Containers that repeatedly appear on the list were physically not injected, but were either closed on the station or have inventory pending to be closed still. Tote was never scanned by any other sensors in the building.<br><br>Please assign associates to sweep these totes, closing them and sending to OB, prioritising those totes in red. <br><br><br><BODY style=font-size:18pt;font-family:Calibri><b>TOTES DWELLING ON UIS MACHINES:</b><br><br><BODY style=font-size:11pt;font-family:Calibri><br>"
+        .HTMLBody = "<BODY style=font-size:11pt;font-family:Calibri>Hi, Team <br><br><br>Here is the dwelling containers summary for Robot Stations. Containers that repeatedly ... <br><br><br><BODY style=font-size:18pt;font-family:Calibri><b>TOTES DWELLING ON UIS MACHINES:</b><br><br><BODY style=font-size:11pt;font-family:Calibri><br>"
         Set olInsp = .GetInspector
         Set wdDoc = olInsp.WordEditor
         
 
         wdDoc.Range.InsertAfter vbCrLf
-        Worksheets("Mapping").Range("A1:AA100").Copy
+        Worksheets("Main").Range("A1:AA100").Copy
         PasteAtEndPic wdDoc
-        Worksheets("Mapping").Range("AF1:AJ45").Copy
+        Worksheets("main").Range("AF1:AJ45").Copy
         pste wdDoc ' paste as table
         Application.Wait (Now + TimeValue("0:00:1")) 'zlitujcie sie przyjaciele, Outlook jest uposledzony...
         Application.CutCopyMode = False
